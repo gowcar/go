@@ -56,6 +56,7 @@ const (
 	_If          // if
 	_Import      // import
 	_Interface   // interface
+	_Annotation  // annotation
 	_Map         // map
 	_Package     // package
 	_Range       // range
@@ -64,6 +65,8 @@ const (
 	_Struct      // struct
 	_Switch      // switch
 	_Type        // type
+	_Until       // until
+	_At          // @
 	_Var         // var
 
 	// empty line comment to exclude it from .String

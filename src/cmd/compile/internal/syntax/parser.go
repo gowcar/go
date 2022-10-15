@@ -414,6 +414,10 @@ func (p *parser) fileOrNil() *File {
 			p.next()
 			f.DeclList = p.appendGroup(f.DeclList, p.constDecl)
 
+		case _At:
+			p.next()
+			f.DeclList = p.appendGroup(f.DeclList, p.atDecl)
+
 		case _Type:
 			p.next()
 			f.DeclList = p.appendGroup(f.DeclList, p.typeDecl)
@@ -559,6 +563,28 @@ func (p *parser) constDecl(group *Group) Decl {
 	}
 
 	d := new(ConstDecl)
+	d.pos = p.pos()
+	d.Group = group
+	d.Pragma = p.takePragma()
+
+	d.NameList = p.nameList(p.name())
+	if p.tok != _EOF && p.tok != _Semi && p.tok != _Rparen {
+		d.Type = p.typeOrNil()
+		if p.gotAssign() {
+			d.Values = p.exprList()
+		}
+	}
+
+	return d
+}
+
+// ConstSpec = IdentifierList [ [ Type ] "=" ExpressionList ] .
+func (p *parser) atDecl(group *Group) Decl {
+	if trace {
+		defer p.trace("atDecl")()
+	}
+
+	d := new(AtDecl)
 	d.pos = p.pos()
 	d.Group = group
 	d.Pragma = p.takePragma()
@@ -1375,6 +1401,9 @@ func (p *parser) typeOrNil() Expr {
 	case _Interface:
 		return p.interfaceType()
 
+	case _Annotation:
+		return p.annotationType()
+
 	case _Name:
 		return p.qualifiedName(nil)
 
@@ -1519,6 +1548,73 @@ func (p *parser) interfaceType() *InterfaceType {
 	typ.pos = p.pos()
 
 	p.want(_Interface)
+	p.want(_Lbrace)
+	p.list(_Semi, _Rbrace, func() bool {
+		switch p.tok {
+		case _Name:
+			f := p.methodDecl()
+			if f.Name == nil && p.allowGenerics() {
+				f = p.embeddedElem(f)
+			}
+			typ.MethodList = append(typ.MethodList, f)
+			return false
+
+		case _Lparen:
+			// TODO(gri) Need to decide how to adjust this restriction.
+			p.syntaxError("cannot parenthesize embedded type")
+			f := new(Field)
+			f.pos = p.pos()
+			p.next()
+			f.Type = p.qualifiedName(nil)
+			p.want(_Rparen)
+			typ.MethodList = append(typ.MethodList, f)
+			return false
+
+		case _Operator:
+			if p.op == Tilde && p.allowGenerics() {
+				typ.MethodList = append(typ.MethodList, p.embeddedElem(nil))
+				return false
+			}
+
+		default:
+			if p.allowGenerics() {
+				pos := p.pos()
+				if t := p.typeOrNil(); t != nil {
+					f := new(Field)
+					f.pos = pos
+					f.Type = t
+					typ.MethodList = append(typ.MethodList, p.embeddedElem(f))
+					return false
+				}
+			}
+		}
+
+		if p.allowGenerics() {
+			p.syntaxError("expecting method or embedded element")
+			p.advance(_Semi, _Rbrace)
+			return false
+		}
+
+		p.syntaxError("expecting method or interface name")
+		p.advance(_Semi, _Rbrace)
+		return false
+	})
+
+	return typ
+}
+
+// AnnotationType = "annotation" "{" { ( MethodDecl | EmbeddedElem | TypeList ) ";" } "}" .
+// TypeList      = "type" Type { "," Type } .
+// TODO(gri) remove TypeList syntax if we accept #45346
+func (p *parser) annotationType() *AnnotationType {
+	if trace {
+		defer p.trace("annotationType")()
+	}
+
+	typ := new(AnnotationType)
+	typ.pos = p.pos()
+
+	p.want(_Annotation)
 	p.want(_Lbrace)
 	p.list(_Semi, _Rbrace, func() bool {
 		switch p.tok {
@@ -2328,6 +2424,20 @@ func (p *parser) forStmt() Stmt {
 	return s
 }
 
+func (p *parser) untilStmt() Stmt {
+	if trace {
+		defer p.trace("untilStmt")()
+	}
+
+	s := new(UntilStmt)
+	s.pos = p.pos()
+
+	s.Init, s.Cond, s.Post = p.header(_Until)
+	s.Body = p.blockStmt("until clause")
+
+	return s
+}
+
 func (p *parser) header(keyword token) (init SimpleStmt, cond Expr, post SimpleStmt) {
 	p.want(keyword)
 
@@ -2600,6 +2710,9 @@ func (p *parser) stmtOrNil() Stmt {
 	case _Const:
 		return p.declStmt(p.constDecl)
 
+	case _At:
+		return p.declStmt(p.atDecl)
+
 	case _Type:
 		return p.declStmt(p.typeDecl)
 	}
@@ -2623,6 +2736,9 @@ func (p *parser) stmtOrNil() Stmt {
 
 	case _For:
 		return p.forStmt()
+
+	case _Until:
+		return p.untilStmt()
 
 	case _Switch:
 		return p.switchStmt()

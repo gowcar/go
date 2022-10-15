@@ -72,6 +72,18 @@ type (
 		decl
 	}
 
+	// NameList
+	// NameList      = Values
+	// NameList Type = Values
+	AtDecl struct {
+		Group    *Group // nil means not part of a group
+		Pragma   Pragma
+		NameList []*Name
+		Type     Expr // nil means no type
+		Values   Expr // nil means no values
+		decl
+	}
+
 	// Name Type
 	TypeDecl struct {
 		Group      *Group // nil means not part of a group
@@ -286,6 +298,12 @@ type (
 		expr
 	}
 
+	// annotation { MethodList[0]; MethodList[1]; ... }
+	AnnotationType struct {
+		MethodList []*Field
+		expr
+	}
+
 	FuncType struct {
 		ParamList  []*Field
 		ResultList []*Field
@@ -403,6 +421,14 @@ type (
 	}
 
 	ForStmt struct {
+		Init SimpleStmt // incl. *RangeClause
+		Cond Expr
+		Post SimpleStmt
+		Body *BlockStmt
+		stmt
+	}
+
+	UntilStmt struct {
 		Init SimpleStmt // incl. *RangeClause
 		Cond Expr
 		Post SimpleStmt

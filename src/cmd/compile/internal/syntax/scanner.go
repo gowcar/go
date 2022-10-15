@@ -380,14 +380,22 @@ func (s *scanner) ident() {
 
 	// possibly a keyword
 	lit := s.segment()
-	if len(lit) >= 2 {
-		if tok := keywordMap[hash(lit)]; tok != 0 && tokStrFast(tok) == string(lit) {
+	//if len(lit) >= 2 {
+	//	if tok := keywordMap[hash(lit)]; tok != 0 && tokStrFast(tok) == string(lit) {
+	//		s.nlsemi = contains(1<<_Break|1<<_Continue|1<<_Fallthrough|1<<_Return, tok)
+	//		s.tok = tok
+	//		return
+	//	}
+	//}
+
+	if len(lit) >= 1 {
+		k := string(lit)
+		if tok := keywordMap[k]; tok != 0 && tokStrFast(tok) == k {
 			s.nlsemi = contains(1<<_Break|1<<_Continue|1<<_Fallthrough|1<<_Return, tok)
 			s.tok = tok
 			return
 		}
 	}
-
 	s.nlsemi = true
 	s.lit = string(lit)
 	s.tok = _Name
@@ -421,21 +429,28 @@ func hash(s []byte) uint {
 	return (uint(s[0])<<4 ^ uint(s[1]) + uint(len(s))) & uint(len(keywordMap)-1)
 }
 
-var keywordMap [1 << 6]token // size must be power of two
+//var keywordMap [1 << 6]token // size must be power of two
+var keywordMap map[string]token // size must be power of two
 
 func init() {
 	// populate keywordMap
+	//for tok := _Break; tok <= _Var; tok++ {
+	//	h := hash([]byte(tok.String()))
+	//	if keywordMap[h] != 0 {
+	//		panic("imperfect hash")
+	//	}
+	//	keywordMap[h] = tok
+	//}
+
+	keywordMap = make(map[string]token)
 	for tok := _Break; tok <= _Var; tok++ {
-		h := hash([]byte(tok.String()))
-		if keywordMap[h] != 0 {
-			panic("imperfect hash")
-		}
-		keywordMap[h] = tok
+		k := tokStrFast(tok)
+		keywordMap[k] = tok
 	}
 }
 
 func lower(ch rune) rune     { return ('a' - 'A') | ch } // returns lower-case ch iff ch is ASCII letter
-func isLetter(ch rune) bool  { return 'a' <= lower(ch) && lower(ch) <= 'z' || ch == '_' }
+func isLetter(ch rune) bool  { return 'a' <= lower(ch) && lower(ch) <= 'z' || ch == '_' || ch == '@' }
 func isDecimal(ch rune) bool { return '0' <= ch && ch <= '9' }
 func isHex(ch rune) bool     { return '0' <= ch && ch <= '9' || 'a' <= lower(ch) && lower(ch) <= 'f' }
 
