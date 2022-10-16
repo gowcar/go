@@ -79,6 +79,14 @@ func (e *escape) stmt(n ir.Node) {
 		e.block(n.Body)
 		e.loopDepth--
 
+	case ir.OUNTIL:
+		n := n.(*ir.UntilStmt)
+		e.loopDepth++
+		e.loopDepth++
+		e.discard(n.Cond)
+		e.block(n.Body)
+		e.loopDepth--
+
 	case ir.ORANGE:
 		// for Key, Value = range X { Body }
 		n := n.(*ir.RangeStmt)

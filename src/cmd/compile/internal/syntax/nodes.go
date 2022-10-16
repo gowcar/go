@@ -431,7 +431,6 @@ type (
 	UntilStmt struct {
 		Init SimpleStmt // incl. *RangeClause
 		Cond Expr
-		Post SimpleStmt
 		Body *BlockStmt
 		stmt
 	}

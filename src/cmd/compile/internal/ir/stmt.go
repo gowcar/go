@@ -215,6 +215,25 @@ func NewForStmt(pos src.XPos, init Node, cond, post Node, body []Node) *ForStmt 
 	return n
 }
 
+type UntilStmt struct {
+	miniStmt
+	Label    *types.Sym
+	Cond     Node
+	Body     Nodes
+	HasBreak bool
+}
+
+func NewUntilStmt(pos src.XPos, init Node, cond Node, body []Node) *UntilStmt {
+	n := &UntilStmt{Cond: cond}
+	n.pos = pos
+	n.op = OUNTIL
+	if init != nil {
+		n.init = []Node{init}
+	}
+	n.Body = body
+	return n
+}
+
 func (n *ForStmt) SetOp(op Op) {
 	if op != OFOR && op != OFORUNTIL {
 		panic(n.no("SetOp " + op.String()))

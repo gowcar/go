@@ -2432,7 +2432,7 @@ func (p *parser) untilStmt() Stmt {
 	s := new(UntilStmt)
 	s.pos = p.pos()
 
-	s.Init, s.Cond, s.Post = p.header(_Until)
+	s.Init, s.Cond, _ = p.header(_Until)
 	s.Body = p.blockStmt("until clause")
 
 	return s
