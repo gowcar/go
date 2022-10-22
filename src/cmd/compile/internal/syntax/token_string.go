@@ -60,7 +60,7 @@ func _() {
 	_ = x[tokenCount-50]
 }
 
-const _token_name = "EOFnameliteralopop=opop=:=<-*([{)]},;:....breakcasechanconstcontinuedefaultdeferelsefallthroughforfuncgogotoifimportinterfaceannotationmappackagerangereturnselectstructswitchtypeuntil@var"
+const _token_name = "EOFnameliteralopop=opop=:=<-*([{)]},;:....breakcasechanconstcontinuedefaultdeferelsefallthroughforfuncgogotoifimportinterface@interfacemappackagerangereturnselectstructswitchtypeuntil@var"
 
 var _token_index = [...]uint8{0, 3, 7, 14, 16, 19, 23, 24, 26, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 42, 47, 51, 55, 60, 68, 75, 80, 84, 95, 98, 102, 104, 108, 110, 116, 125, 135, 138, 145, 150, 156, 162, 168, 174, 178, 183, 184, 187, 187}
 

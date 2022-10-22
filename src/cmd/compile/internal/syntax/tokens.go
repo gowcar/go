@@ -56,7 +56,7 @@ const (
 	_If          // if
 	_Import      // import
 	_Interface   // interface
-	_Annotation  // annotation
+	_Annotation  // @interface
 	_Map         // map
 	_Package     // package
 	_Range       // range
